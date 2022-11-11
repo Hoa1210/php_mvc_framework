@@ -1,10 +1,7 @@
 <?php 
-class m_home extends Database{
+class m_home extends DB{
 
     public function get(){
         echo "Loading";
-        // $sql = "SELECT * FROM home";
-        // $this->setQuery($sql);
-        // return $this->loadAllRows(array());
     }
 }

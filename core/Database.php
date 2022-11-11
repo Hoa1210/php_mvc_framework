@@ -1,87 +1,74 @@
 <?php
-require_once "./config.php";
-
-class Database{
-    protected $pdo = NULL;
-    protected $sql = '';
-    protected $sta = NULL;
-
-    public function __construct() {
-        try
-        {
-            $this->pdo = new PDO("mysql:host=".DB_HOST."; dbname=".DB_NAME,DB_USER,DB_PASS);
-            $this->pdo->query('set names "utf8"');
-        }
-        catch(PDOException $ex )
-        {
-            die($ex->getMessage());
+require_once "Config.php";
+class DB
+{
+    private $ketnoi;
+    public function connect()
+    {
+        if (!$this->ketnoi) {
+            $this->ketnoi = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME) or die('Error => DATABASE');
+            mysqli_query($this->ketnoi, "set names 'utf8' ");
         }
     }
-    public function setQuery($sql) {
-        $this->sql = $sql;
+    public function dis_connect()
+    {
+        if ($this->ketnoi) {
+            mysqli_close($this->ketnoi);
+        }
     }
-
-    //Function execute the query
-    // hàm này sẽ làm hàm chạy câu truy vấn
-    public function execute($options=array()) {
-        $this->sta = $this->pdo->prepare($this->sql);
-        if($options) {  //If have $options then system will be tranmission parameters
-            for($i=0;$i<count($options);$i++) {
-                $this->sta->bindParam($i+1,$options[$i]);
-            }
-        }
-        $this->sta->execute();
-        return $this->sta;
+    public function query($sql)
+    {
+        $this->connect();
+        $row = $this->ketnoi->query($sql);
+        return $row;
     }
-
-    //Funtion load datas on table
-    // lấy nhiều dữ liệu ở trong bảng
-    public function loadAllRows($options=array()) {
-        if(!$options) {
-            if(!$result = $this->execute())
-                return false;
-        }
-        else {
-            if(!$result = $this->execute($options))
-                return false;
-        }
-        return $result->fetchAll(PDO::FETCH_OBJ);
+    public function remove($table, $where)
+    {
+        $this->connect();
+        $sql = "DELETE FROM $table WHERE $where";
+        return mysqli_query($this->ketnoi, $sql);
     }
-
-    //Funtion load 1 data on the table
-    //lay 1 du lieu thoi
-    public function loadRow($option=array()) {
-        if(!$option) {
-            if(!$result = $this->execute())
-                return false;
+    public function get_list($sql)
+    {
+        $this->connect();
+        $result = mysqli_query($this->ketnoi, $sql);
+        if (!$result) {
+            die('Câu truy vấn bị sai');
         }
-        else {
-            if(!$result = $this->execute($option))
-                return false;
+        $return = array();
+        while ($row = mysqli_fetch_assoc($result)) {
+            $return[] = $row;
         }
-        return $result->fetch(PDO::FETCH_OBJ);
+        mysqli_free_result($result);
+        return $return;
     }
-
-    //Function count the record on the table
-    public function loadRecord($option=array()) {
-        if(!$option) {
-            if(!$result = $this->execute())
-                return false;
+    public function get_row($sql)
+    {
+        $this->connect();
+        $result = mysqli_query($this->ketnoi, $sql);
+        if (!$result) {
+            die('Câu truy vấn bị sai');
         }
-        else {
-            if(!$result = $this->execute($option))
-                return false;
+        $row = mysqli_fetch_assoc($result);
+        mysqli_free_result($result);
+        if ($row) {
+            return $row;
         }
-        return $result->fetch(PDO::FETCH_COLUMN);
+        return false;
     }
-
-    public function getLastId() {
-        return $this->pdo->lastInsertId();
-    }
-
-    public function disconnect() {
-        $this->sta=NULL;
-        $this->pdo = NULL;
+    public function num_rows($sql)
+    {
+        $this->connect();
+        $result = mysqli_query($this->ketnoi, $sql);
+        if (!$result) {
+            die('Câu truy vấn bị sai');
+        }
+        $row = mysqli_num_rows($result);
+        mysqli_free_result($result);
+        if ($row) {
+            return $row;
+        }
+        return false;
     }
 }
-?>
+
